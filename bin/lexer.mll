@@ -34,6 +34,7 @@
   ("string", TSTRING);
   ("else", ELSE);
   ("if", IF);
+  ("for", FOR);
   ("while", WHILE);
   ("return", RETURN);
   ("var", VAR);
