@@ -1,0 +1,7 @@
+.vscode
+_build
+bin/main.exe
+oatc
+ocamlbin
+*~
+output
