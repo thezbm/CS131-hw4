@@ -13,8 +13,10 @@ let loc (startpos:Lexing.position) (endpos:Lexing.position) (elt:'a) : 'a node =
 %token NULL
 %token <string> STRING
 %token <string> IDENT
+%token <bool>   BOOL
 
 %token TINT     /* int */
+%token TBOOL    /* bool */
 %token TVOID    /* void */
 %token TSTRING  /* string */
 %token IF       /* if */
@@ -29,7 +31,19 @@ let loc (startpos:Lexing.position) (endpos:Lexing.position) (elt:'a) : 'a node =
 %token PLUS     /* + */
 %token DASH     /* - */
 %token STAR     /* * */
+%token SHL      /* << */
+%token SHR      /* >> */
+%token SHRA     /* >>> */
 %token EQEQ     /* == */
+%token NEQ      /* != */
+%token LT       /* < */
+%token LTEQ     /* <= */
+%token GT       /* > */
+%token GTEQ     /* >= */
+%token LAND     /* & */
+%token LOR      /* | */
+%token BAND     /* [&] */
+%token BOR      /* [|] */
 %token EQ       /* = */
 %token LPAREN   /* ( */
 %token RPAREN   /* ) */
@@ -40,7 +54,14 @@ let loc (startpos:Lexing.position) (endpos:Lexing.position) (elt:'a) : 'a node =
 %token GLOBAL   /* global */
 
 
-
+/* Operator precedences */
+%left BOR
+%left BAND
+%left LOR
+%left LAND
+%left EQEQ NEQ
+%left LT LTEQ GT GTEQ
+%left SHL SHR SHRA
 %left PLUS DASH
 %left STAR
 %nonassoc BANG
@@ -80,10 +101,11 @@ decl:
 
 arglist:
   | l=separated_list(COMMA, pair(ty,IDENT)) { l }
-    
+
 ty:
   | TINT   { TInt }
-  | r=rtyp { TRef r } 
+  | TBOOL   { TBool }
+  | r=rtyp { TRef r }
 
 
 %inline ret_ty:
@@ -98,7 +120,7 @@ ty:
   | PLUS   { Add }
   | DASH   { Sub }
   | STAR   { Mul }
-  | EQEQ   { Eq } 
+  | EQEQ   { Eq }
 
 %inline uop:
   | DASH  { Neg }
@@ -106,17 +128,19 @@ ty:
   | TILDE { Bitnot }
 
 gexp:
-  | t=rtyp NULL  { loc $startpos $endpos @@ CNull t }
-  | i=INT      { loc $startpos $endpos @@ CInt i } 
+  | t=rtyp NULL { loc $startpos $endpos @@ CNull t }
+  | i=INT       { loc $startpos $endpos @@ CInt i }
+  | b=BOOL      { loc $startpos $endpos @@ CBool b }
 
-lhs:  
+lhs:
   | id=IDENT            { loc $startpos $endpos @@ Id id }
   | e=exp LBRACKET i=exp RBRACKET
                         { loc $startpos $endpos @@ Index (e, i) }
 
 exp:
   | i=INT               { loc $startpos $endpos @@ CInt i }
-  | t=rtyp NULL           { loc $startpos $endpos @@ CNull t }
+  | b=BOOL              { loc $startpos $endpos @@ CBool b }
+  | t=rtyp NULL         { loc $startpos $endpos @@ CNull t }
   | e1=exp b=bop e2=exp { loc $startpos $endpos @@ Bop (b, e1, e2) }
   | u=uop e=exp         { loc $startpos $endpos @@ Uop (u, e) }
   | id=IDENT            { loc $startpos $endpos @@ Id id }
@@ -124,12 +148,13 @@ exp:
                         { loc $startpos $endpos @@ Index (e, i) }
   | e=exp LPAREN es=separated_list(COMMA, exp) RPAREN
                         { loc $startpos $endpos @@ Call (e,es) }
-  | LPAREN e=exp RPAREN { e } 
+
+  | LPAREN e=exp RPAREN { e }
 
 vdecl:
   | VAR id=IDENT EQ init=exp { (id, init) }
 
-stmt: 
+stmt:
   | d=vdecl SEMI        { loc $startpos $endpos @@ Decl(d) }
   | p=lhs EQ e=exp SEMI { loc $startpos $endpos @@ Assn(p,e) }
   | e=exp LPAREN es=separated_list(COMMA, exp) RPAREN SEMI
@@ -137,8 +162,8 @@ stmt:
   | ifs=if_stmt         { ifs }
   | RETURN SEMI         { loc $startpos $endpos @@ Ret(None) }
   | RETURN e=exp SEMI   { loc $startpos $endpos @@ Ret(Some e) }
-  | WHILE LPAREN e=exp RPAREN b=block  
-                        { loc $startpos $endpos @@ While(e, b) } 
+  | WHILE LPAREN e=exp RPAREN b=block
+                        { loc $startpos $endpos @@ While(e, b) }
 
 block:
   | LBRACE stmts=list(stmt) RBRACE { stmts }
