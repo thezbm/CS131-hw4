@@ -1,0 +1,29 @@
+global radius = 500;
+global length = 1001;
+
+int circle_area() {
+  var array = new int[length][length];
+  var cnt = 0;
+  for (var i = -radius; i <= radius; i = i + 1;) {
+    for (var j = -radius; j <= radius; j = j + 1;) {
+      if (radius * radius >= i * i + j * j) {
+        cnt = cnt + 1;
+      }
+    }
+  }
+  return cnt;
+}
+
+int square_area(int length) {
+  return length * length;
+}
+
+int program (int argc, string[] argv) {
+  print_string("pi is ");
+  print_int(4 * circle_area());
+  print_string("/");
+  print_int(square_area(length - 1));
+  print_string(". exited with ");
+  return 0;
+}
+
