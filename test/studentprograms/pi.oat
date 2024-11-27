@@ -2,7 +2,6 @@ global radius = 500;
 global length = 1001;
 
 int circle_area() {
-  var array = new int[length][length];
   var cnt = 0;
   for (var i = -radius; i <= radius; i = i + 1;) {
     for (var j = -radius; j <= radius; j = j + 1;) {
